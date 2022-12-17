@@ -15,12 +15,25 @@ root = "/Users/benen/Comp Sci/Python/FDU_Internship/BirdBehavior"
 path = os.path.join(root, "Data/2022-09-27 Chimney Swift Roost - HD 1080p.mov")
 cap = cv.VideoCapture(path)
 
-
 def findBounds(num):
     return (num // 20, num//20 + 1)
 
+frameFile = open("Data/FrameCount.txt", "r")
+framenum = frameFile.readline().strip()
+if framenum == "":
+    framenum = 1
+else:
+    framenum = int(framenum)
+frameFile.close()
+localframes = 1
+
+file = open("Data/Features.npy", "wb")
 
 while cap.isOpened():
+    if localframes < framenum:
+        print(localframes)
+        localframes += 1
+        continue
     ret, frame = cap.read()
 
     if not ret:
@@ -33,7 +46,7 @@ while cap.isOpened():
     nframe = np.array(gray)
     #nframe.shape => (1080, 1920)
     #SMALL TESTING VALUE FOR LOW RUNTIME
-    nframe = np.array(nframe[(len(nframe)//2)-32:(len(nframe)//2)+32, (len(nframe[0])//2)-64:(len(nframe[0])//2)+64])
+    #nframe = np.array(nframe[(len(nframe)//2)-32:(len(nframe)//2)+32, (len(nframe[0])//2)-64:(len(nframe[0])//2)+64])
     #nframe.shape => (64, 128)
 
     # winSize = (64, 128) #should match the dimensions of nframe
@@ -85,8 +98,6 @@ while cap.isOpened():
                     hist[lower % 9] += ((upper*20 - ang)/20) * m #the smaller the angle, the more it will contribute to lower bound
             histograms.append(hist)
 
-    #print(histograms)
-
     #At this point, histograms should contain every histogram for each cell
     #Next, we need to normalize each block to account for lighting variance
     blockSize = (16, 16)
@@ -102,14 +113,37 @@ while cap.isOpened():
                 block[b] = block[b] / L2
             blocks.append(block)
 
-    #k = np.sqrt(sum(a**2 for a in vector))
-    #for a in range(len(vector)):
-    #   vector[a] = vector[a] / k
-
     #Finally,flatten into a 1-dimensional feature matrix (which is usually fed into a SVM)
     features = np.reshape(blocks, len(blocks) * len(blocks[0]))
-    #features.shape = 9 * cellsPerBlock * blocksPerImage
-    #print(features.shape)
+
+    # features.shape will have dimensions: 9 * cellsPerBlock * blocksPerImage
+
+    ''' 
+    
+    NEXT: Write the features into a numpy binary
+    
+    '''
+
+    opentype = "wb"
+
+    arr = []
+    if (framenum == 1):
+        arr = np.array([])
+    else:
+        arr = np.load("Data/Features.npy")
+    np.append(arr, features)
+    np.save(file, arr)
+
+    print(framenum)
+    framenum += 1
+    localframes += 1
+    frameFile = open("Data/FrameCount.txt", "w")
+    frameFile.write(str(framenum))
+    frameFile.close()
+
+    if framenum == 6:
+        file.close()
+        break
 ######################################################################################
     #TODO: IMPLEMENT Neural Network - SUPPORT VECTOR MACHINE (support vector clustering?)
     #Run entire video and write feature vector of each frame directly into a text file / spreadsheet?
@@ -122,29 +156,43 @@ while cap.isOpened():
     '''
     FOR GRADIENT VISUALISATION
     '''
-
-    #Calculate gradients
-    gx = cv.Sobel(gray, cv.CV_32F, 1, 0, ksize=3)
-    gy = cv.Sobel(gray, cv.CV_32F, 0, 1, ksize=3)
-
-    #convert to vector
-    #mag, angle = cv.cartToPolar(gx, gy, angleInDegrees=True)
-
-    gx = cv.convertScaleAbs(gx)
-    gy = cv.convertScaleAbs(gy)
-
-    combined = cv.addWeighted(gx, 0.5, gy, 0.5, 0)
-
-    # cv.imshow("Sobel X", gx)
-    # cv.imshow("Sobel Y", gy)
-    cv.namedWindow("Sobel Combined", cv.WINDOW_NORMAL)
-    cv.resizeWindow("Sobel Combined", 1920, 1080)
-    cv.imshow("Sobel Combined", combined)
-
+    #
+    # #Calculate gradients
+    # gx = cv.Sobel(gray, cv.CV_32F, 1, 0, ksize=3)
+    # gy = cv.Sobel(gray, cv.CV_32F, 0, 1, ksize=3)
+    #
+    # #convert to vector
+    # #mag, angle = cv.cartToPolar(gx, gy, angleInDegrees=True)
+    #
+    # gx = cv.convertScaleAbs(gx)
+    # gy = cv.convertScaleAbs(gy)
+    #
+    # combined = cv.addWeighted(gx, 0.5, gy, 0.5, 0)
+    #
+    # # cv.imshow("Sobel X", gx)
+    # # cv.imshow("Sobel Y", gy)
+    # cv.namedWindow("Sobel Combined", cv.WINDOW_NORMAL)
+    # cv.resizeWindow("Sobel Combined", 1920, 1080)
+    # cv.imshow("Sobel Combined", combined)
+    #
 
 #    cv.imshow('frame', gray)
-    if cv.waitKey(10) == ord('q'):
-        break
+#     if cv.waitKey(10) == ord('q'):
+#         break
+
+data1, data2, data3, data4, data5 = "", '', '', '', ''
+with open("Data/Features.npy", "rb") as f:
+    data1 = np.load(f)
+    data2 = np.load(f)
+    data3 = np.load(f)
+    data4 = np.load(f)
+    data5 = np.load(f)
+print(data1)
+print(data2)
+print(data3)
+print(data4)
+print(data5)
+
 
 cap.release()
 cv.destroyAllWindows()
