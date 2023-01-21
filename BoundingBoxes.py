@@ -15,6 +15,7 @@ curr3 = [1]
 def thresh_callback(val):
     threshold = val
 
+    #Reshape cv_gray to (128, 64) ?
     canny_output = cv.Canny(src_gray, threshold, threshold * 2)
 
     contours, _ = cv.findContours(canny_output, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
@@ -66,16 +67,25 @@ starttime = time.time()
 lasttime = time.time()
 totalBoxes = 0
 lastframecount = 1
+y = [1,1800*3,1800*6,1800*9,1800*12,1800*15,1800*21,1800*27]
+x = y[0]
 while cap.isOpened():
-
+#3, 0, 15, 18, 16,
+# 12, 6, 1
     #####
     #FOR SKIPPING TO X FRAME
     #####
-    x = 0
     if framecount < x:
+        ret, frame = cap.read()
+        if not ret:
+            print("sheeeeee")
+            break
         framecount += 1
         continue
+    if y.index(x) + 1 < len(y):
+        x = y[y.index(x)+1]
     ret, frame = cap.read()
+    print("X: ", x, " framecount: ", framecount)
 
 
     if not ret:

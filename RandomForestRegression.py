@@ -14,12 +14,17 @@ data = pd.read_csv("Data/BirdData.csv")
 print(data.head())
 
 #Different variables should be tested for regression including weather, location, date, time, etc.
-x = data["Weather"].values.reshape(-1, 1)
+x = data["Temperature"].values.reshape(-1, 1)
+# x = data["Location"].values.reshape(-1, 1)
+# x = data["Date"].values.reshape(-1, 1)
+# x = data["Time"].values.reshape(-1, 1)
+# x = data["Wind Speed"].values.reshape(-1, 1)
+#variable to be predicted -> number of birds on screen
 y = data["BirdCount"]
 
 # Method-2: Random Forest regression algorithm
 # the Random Forest regression algorithm to train
-# the electricity price prediction model:
+# the bird count prediction model:
 
 model = RandomForestRegressor()
 
@@ -29,7 +34,7 @@ model.fit(xtrain, ytrain)
 x_range = np.linspace(x.min(), x.max(), 100)
 y_range = model.predict(x_range.reshape(-1, 1))
 
-fig = px.scatter(data, x='TV', y='Sales', opacity=0.65)
+fig = px.scatter(data, x='Temperature', y='Bird Count', opacity=0.65)
 
 fig.add_traces(go.Scatter(x=x_range, y=y_range,
 
